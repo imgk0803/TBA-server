@@ -6,6 +6,9 @@ import User from "../models/user.js";
 export const createReview = async(req,res,next)=>{
     try{
                 const{rating , turfreview , turfid , userid} = req.body
+                if(!rating && !turfreview ){
+                    return res.status(400).json({success : false , message : "please provide rating and review"})
+                }
                 const review = new Review({
                     rating : rating,
                     content : turfreview,
@@ -14,10 +17,11 @@ export const createReview = async(req,res,next)=>{
                 })
                 await review.save()
                 const turf = await Turf.findByIdAndUpdate(turfid,{$push : {reviews : review._id}},{new:true}).populate('reviews')
-                res.status(200).json({review,turf})
+                res.status(200).json({success : true , review , turf})
     }
     catch(err){
-        console.log(err)
+        console.log("error ==",err.message)
+        res.status(400).json({success : false , message : err.message})
     }
 };
 
@@ -27,24 +31,25 @@ export const getReview = async(req,res,next)=>{
         const review = await Review.find()     
         if(!review){
            
-               return res.status(500).send("there is no review")
+               return res.status(400).json({success : false , message : "there is no review"})
            
 
         }
-        res.status(200).json(review)
+        res.status(200).json({success : true , review , message : 'reviews fetched'})
 
         
 
     }
     catch(err){
-        console.log(err)
+        console.log("error ==",err.message)
+        res.status(400).json({success : false , message : err.message})
     }
 };
 
 export const updateReview = async(req,res,next)=>{
     try{
               const updated = await Review.findByIdAndUpdate(req.params.id,req.body,{new:true})
-              res.status(200).json(updated)
+              res.status(200).json({success : true , updated, message :"review updated"})
     }
     catch(err){
         console.log(err)
@@ -52,11 +57,12 @@ export const updateReview = async(req,res,next)=>{
 };
 export const deleteReview = async(req,res,next)=>{
     try{
-             const deleted = await Review.findByIdAndDelete(req.params.id)
-             res.status(200).json(deleted)
+             const deleted = await Review.findByIdAndUpdate(req.params.id,{isActive : false},{new:true})
+             res.status(200).json({success : true , message : "deleted successfully" , deleted})
 
     }
     catch(err){
-        console.log(err)
+        console.log("error ==",err.message)
+        res.status(400).json({success : false , message : err.message})
     }
 }

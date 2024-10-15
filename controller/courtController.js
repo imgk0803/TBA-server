@@ -56,13 +56,5 @@ export const updateCourt= async(req,res,next)=>{
 
       }
   };
-  export const getOneCourt = async(re,res,next)=>{
-     try{
-               const {courtid} = req.params
-     }
-     catch(err){
-      console.log(err)
-     }
-
-  }
+  
  

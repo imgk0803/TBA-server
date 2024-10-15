@@ -68,7 +68,13 @@ export const verifyPayment = async(req,res,next)=>{
 
                 }
                 else{
-                   
+                  const objectIds = bookingsid.map(id => new mongoose.Types.ObjectId(id));
+
+                  await Booking.deleteMany({ _id: { $in: objectIds } });
+      
+                  return res.status(400).json({ 
+                      error: 'Payment failed. Associated bookings have been deleted.' 
+                  });
                 }
              
       }

@@ -29,11 +29,10 @@ const userSchema = new mongoose.Schema(
             default : 'user'
             
           },
-          bookings: [{
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Booking'
-          }] ,   
-        
+          isActive : {
+            type : Boolean,
+            default : true
+          }
     
     }
 

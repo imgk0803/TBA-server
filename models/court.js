@@ -6,11 +6,6 @@ const courtSchema = new mongoose.Schema({
         ref : 'Turf',
         required :true
     },
-    booking : [{
-          type: mongoose.Schema.Types.ObjectId,
-          ref : 'Booking',
-          require :true
-    }],
   sport : {
          type : String,
          enum :['Football','Cricket','Badminton','Volleyball'],
