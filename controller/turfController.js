@@ -7,6 +7,8 @@ import cloudinaryInstance from "../config/cloudinaryConfig.js";
 
 export const createTurf = async(req,res,next)=>{
      try{
+      console.log(req.file)
+      console.log(req.body)
          if(!req.file){
             return res.status(400).json({success : false , message : 'the file is not visible'})
           }
@@ -83,12 +85,7 @@ export const getallTurf = async(req,res,next)=>{
 };
 export const getTurf = async(req,res,next)=>{
   try {
-    const turf = await Turf.findById(req.params.turfid).populate('court').populate({path: 'reviews',
-      populate: {
-        path: 'reviewer', 
-        select: 'username ', 
-      },
-    }).exec();
+    const turf = await Turf.findById(req.params.turfid).populate('court').exec();
     res.status(200).json({success : true , turf , message : 'turf fetched succesfully..'})
         
   }

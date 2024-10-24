@@ -16,7 +16,7 @@ export const createReview = async(req,res,next)=>{
                     reviewer : userid,
                 })
                 await review.save()
-                const turf = await Turf.findByIdAndUpdate(turfid,{$push : {reviews : review._id}},{new:true}).populate('reviews')
+                const turf = await Turf.findByIdAndUpdate(turfid,{$push : {reviews : review._id}},{new:true})
                 res.status(200).json({success : true , review , turf})
     }
     catch(err){
@@ -28,7 +28,7 @@ export const createReview = async(req,res,next)=>{
 export const getReview = async(req,res,next)=>{
     try{
 
-        const review = await Review.find()     
+        const review = await Review.find().populate('reviewer')     
         if(!review){
            
                return res.status(400).json({success : false , message : "there is no review"})

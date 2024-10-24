@@ -9,9 +9,9 @@ adminRouter.post('/turf',upload.single("image"),createTurf )//ok
 adminRouter.get('/turf',getallTurf)//ok
 adminRouter.get('/turf/:turfid',getTurf)//ok
 adminRouter.patch('/updateturf/:turfid',upload.single("image"),updateTurf)//ok
-adminRouter.delete('/turf/:turfid',deleteTurf)
+adminRouter.patch('/turf/:turfid',deleteTurf)
 adminRouter.post('/addcourt/:turfid',addcourt)//ok
 adminRouter.post('/updatecourt',updateCourt)//ok
-adminRouter.delete('/turf/deletecourt/:courtid',deleteCourt)
+adminRouter.patch('/turf/deletecourt/:courtid',deleteCourt)
 adminRouter.post('/addmanager',createManager)//ok
 export default adminRouter

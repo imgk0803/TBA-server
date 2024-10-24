@@ -1,6 +1,6 @@
 import express from "express";
 import {deleteUser, getallUser, login, signin, updatePassword, updateProfile} from '../controller/userController.js'
-import {cancelBooking, createBooking, getallbookig } from "../controller/bookingController.js";
+import {cancelBooking, createBooking, deleteBooking, getallbookig } from "../controller/bookingController.js";
 import { createOrder, getallpayment, verifyPayment } from "../controller/paymentController.js";
 import { mock } from "../utils/mocksignature.js";
 import { getallTurf, getTurf, sortTurfs } from "../controller/turfController.js";
@@ -11,7 +11,7 @@ const userRouter = express.Router()
 userRouter.post('/signin',signin)//ok
 userRouter.post('/login',login)//ok
 userRouter.post('/:userid/court/:courtid',createBooking)
-userRouter.delete('/deletebooking/:bid',cancelBooking)//ok
+userRouter.patch('/deletebooking/:bid',cancelBooking)//ok
 userRouter.post('/createorder',createOrder)
 userRouter.post('/verifypayment',verifyPayment)
 userRouter.get('/mock',mock)
@@ -30,6 +30,7 @@ userRouter.get('/getusers',getallUser)
 userRouter.get('/turf/getcourt/:turfid',getCourts)
 userRouter.get('/turfs',sortTurfs)//ok
 userRouter.get('/razorpaykey',razorpayKey)
+userRouter.delete('/deleteBooking/:bid',deleteBooking)
 
 
 export default userRouter

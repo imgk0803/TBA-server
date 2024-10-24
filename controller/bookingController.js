@@ -10,6 +10,9 @@ export const createBooking = async(req,res,next)=>{
             const{courtid} = req.params
             const {start} =req.body.timeslot
             const {end}  = req.body.timeslot
+            if(!userid){
+              return res.status(200).json({success:false , message : 'Please Login First!'})
+            }
             const bookdate = new Date(req.body.date)
             // Find the court to create a booking
             const court = await Court.findById(courtid)
@@ -18,39 +21,42 @@ export const createBooking = async(req,res,next)=>{
                 'timeslot.start':start ,
                  'timeslot.end':end ,
                   date : bookdate}) 
-            if(bookingsExist && bookingsExist.status !== 'canceled'){
-                return res.send('this time slot isnt available')
-            }
-            if(bookingsExist.status === 'canceled'){
-              bookingsExist.user = userid;
-              bookingsExist.status = 'pending';
-              bookingsExist.payment = '';
-              await bookingsExist.save();
-              await User.findByIdAndUpdate(userid, { $push: { bookings: bookingsExist._id } }, { new: true });
-              return res.status(200).send('Booking Successful!');
-            }           
-
+            if(!bookingsExist){
+              
             // create new booking
 
             const booking = new Booking({
-                ...req.body,
-                user : userid,
-                court : courtid,
-                price : court.price            })
-            await booking.save()
+              ...req.body,
+              user : userid,
+              court : courtid,
+              price : court.price            })
+              await booking.save()
 
-            // Updating the User's document by pushing the booking ID into the 'bookings' array
+                // Updating the User's document by pushing the booking ID into the 'bookings' array
+               return res.status(200).json({success : true , booking ,  message : 'Booking Successful!'});
+            }
+            if(bookingsExist && bookingsExist.status !== 'canceled'){
+                return res.status(200).json({success : false , message : 'this time slot isnt available'})
+            }
+            // if the booking existed as cancelled then modify it as the new booking details
 
-            await User.findByIdAndUpdate(userid,{$push:{bookings:booking._id}},{new:true})
-            res.status(200).send('Booking Successfull!')
+            if(bookingsExist.status === 'canceled'){
+              bookingsExist.user = userid;
+              bookingsExist.status = 'pending';
+              await bookingsExist.save();
+              await User.findByIdAndUpdate(userid, { $push: { bookings: bookingsExist._id } }, { new: true });
+              return res.status(200).json({success : true , booking : bookingsExist, message : 'Booking Successful!'});
+            }           
+
     }
     catch(err){
-        console.log("error::",err)
+      console.log("error ==",err)
+      res.status(400).json({success : false , message : err.message})
     }
 };
 export const cancelBooking = async(req,res,next)=>{
     try{    
-
+            console.log(req.params)
             const deleted = await Booking.findByIdAndUpdate(req.params.bid,{status : "canceled"},{new : true})
             if(!deleted){
                 return res.status(500).send("there is no such booking")
@@ -58,7 +64,8 @@ export const cancelBooking = async(req,res,next)=>{
             res.status(200).json({message : 'BOOKING CANCELLED' , deleted})
     }
     catch(err){
-         console.log(err)
+      console.log("error ==",err.message)
+      res.status(400).json({success : false , message : err.message})
     }
 };
 export const getallbookig = async(req,res,next)=>{
@@ -66,15 +73,16 @@ export const getallbookig = async(req,res,next)=>{
              const bookings = await Booking.find().populate({path:'court',populate:{path : 'turf'}}).exec()
              if(!bookings){
                 
-                    return res.status(500).send("there is no booking")
+                    return res.status(400).json({ success : false , message : "there is no booking"})
                 
 
              }
-             res.status(200).json(bookings)
+             res.status(200).json({success : true , message : 'bookings fetched' , bookings})
 
     }
     catch(err){
-        console.log(err)
+      console.log("error ==",err.message)
+      res.status(400).json({success : false , message : err.message})
     }
 };
 export const getManagerBooking = async(req,res,next)=>{
@@ -92,13 +100,14 @@ export const getManagerBooking = async(req,res,next)=>{
                 
     }
     catch(err){
-        console.log(err)
+      console.log("error ==",err.message)
+      res.status(400).json({success : false , message : err.message})
     }
 };
 export const updateBooking = async (req, res, next) => {
     try {
       const { courtid, bid } = req.params;
-      const { start, end } = req.body.timeslot;
+      const { start, end } = req.body;
       const{date} = req.body;
   
       const bookdate = new Date(date);
@@ -106,12 +115,11 @@ export const updateBooking = async (req, res, next) => {
       const booking = await Booking.findById(bid);
       console.log("booking", booking)
       if (!booking) {
-        return res.status(404).send('Booking not found');
-      }
-  
+        return res.status(200).json({success : false , message : 'Booking not found'});
+      }  
       // Check if the booking is already canceled
       if (booking.status === 'canceled') {
-        return res.status(400).send('The booking is already canceled');
+        return res.status(200).json({success : false , message : 'The booking is already canceled'});
       }
   
       // Check if a booking already exists for the same court, timeslot, and date
@@ -123,8 +131,20 @@ export const updateBooking = async (req, res, next) => {
         _id: { $ne: bid } // Exclude the current booking from the check
       });
       console.log("bookingexist", bookingsExist)
-      if (bookingsExist.length > 0) {
-        return res.status(409).send('This timeslot is not available');
+      if(bookingsExist){
+        if( bookingsExist.status === 'canceled'){
+          const updatedBooking = await Booking.findByIdAndUpdate(
+            bid,
+            {
+              "timeslot.start": start,
+              "timeslot.end": end,
+              date: bookdate
+            },
+            { new: true }
+          );
+          return res.status(200).json({success : true ,updateBooking, message : 'timeslot updated successfully'})
+        }
+
       }
   
       // Update the booking timeslot
@@ -138,14 +158,28 @@ export const updateBooking = async (req, res, next) => {
         { new: true }
       );
       if (!updatedBooking) {
-        return res.status(500).send('Booking update failed');
+        return res.status(500).json({success : false , message : 'Booking update failed'});
       }
   
       // Return the updated booking
-      res.status(200).json({ message: 'Booking updated successfully', updatedBooking });
+      res.status(200).json({success : true ,  message: 'Booking updated successfully', updatedBooking });
     } catch (err) {
       console.error(err);
       res.status(500).send('An error occurred while updating the booking');
     }
   };
+  export const deleteBooking = async(req,res,next)=>{
+    try{    
+            console.log(req.params)
+            const deleted = await Booking.findByIdAndDelete(req.params.bid)
+            if(!deleted){
+                return res.status(500).send("there is no such booking")
+            }
+            res.status(200).json({message : 'BOOKING deleted' , deleted})
+    }
+    catch(err){
+      console.log("error ==",err.message)
+      res.status(400).json({success : false , message : err.message})
+    }
+};
   
