@@ -56,7 +56,6 @@ export const createBooking = async(req,res,next)=>{
 };
 export const cancelBooking = async(req,res,next)=>{
     try{    
-            console.log(req.params)
             const deleted = await Booking.findByIdAndUpdate(req.params.bid,{status : "canceled"},{new : true})
             if(!deleted){
                 return res.status(500).send("there is no such booking")
@@ -156,8 +155,7 @@ export const updateBooking = async (req, res, next) => {
 };
 
   export const deleteBooking = async(req,res,next)=>{
-    try{    
-            console.log(req.params)
+    try{   
             const deleted = await Booking.findByIdAndDelete(req.params.bid)
             if(!deleted){
                 return res.status(500).send("there is no such booking")

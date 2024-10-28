@@ -6,8 +6,6 @@ import cloudinaryInstance from "../config/cloudinaryConfig.js";
 
 export const createTurf = async(req,res,next)=>{
      try{
-      console.log(req.file)
-      console.log(req.body)
          if(!req.file){
             return res.status(400).json({success : false , message : 'the file is not visible'})
           }

@@ -1,4 +1,4 @@
-import mongoose, { connect }  from "mongoose";
+import mongoose  from "mongoose";
 import url from './serverConfig.js'
 export const dbConnect = async()=>{
     try{

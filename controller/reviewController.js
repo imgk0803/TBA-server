@@ -1,6 +1,5 @@
 import Review from "../models/review.js";
 import Turf from "../models/turf.js";
-import User from "../models/user.js";
 
 
 export const createReview = async(req,res,next)=>{

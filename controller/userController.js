@@ -74,7 +74,6 @@ export const login = async(req,res,next)=>{
         }
         const role = user.role
         const token = await generateToken(user.email,user.role)
-        console.log(token)
         res.cookie('token',token);
         res.status(200).json({success : true , user,role,token,message:'login successfull'})
 
