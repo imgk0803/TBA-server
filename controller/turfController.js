@@ -1,4 +1,3 @@
-import Court from "../models/court.js";
 import Turf from "../models/turf.js";
 import User from "../models/user.js";
 import cloudinaryInstance from "../config/cloudinaryConfig.js";

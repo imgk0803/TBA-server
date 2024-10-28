@@ -85,89 +85,76 @@ export const getallbookig = async(req,res,next)=>{
       res.status(400).json({success : false , message : err.message})
     }
 };
-export const getManagerBooking = async(req,res,next)=>{
-    try{
-                const managerid = req.params.managerid
-                const turf = await Turf.findOne({manager:managerid})
-                const courtids = turf.court && turf.court.map(court=>court._id.toString())
-                const bookings = await Booking.find({court :{
-                    $in : courtids
-                }
-                }).populate('court').populate('user')
-                res.status(200).json(bookings)
-                
-
-                
-    }
-    catch(err){
-      console.log("error ==",err.message)
-      res.status(400).json({success : false , message : err.message})
-    }
-};
-export const updateBooking = async (req, res, next) => {
-    try {
-      const { courtid, bid } = req.params;
-      const { start, end } = req.body;
-      const{date} = req.body;
-  
-      const bookdate = new Date(date);
-    
-      const booking = await Booking.findById(bid);
-      console.log("booking", booking)
-      if (!booking) {
-        return res.status(200).json({success : false , message : 'Booking not found'});
-      }  
-      // Check if the booking is already canceled
-      if (booking.status === 'canceled') {
-        return res.status(200).json({success : false , message : 'The booking is already canceled'});
+export const getManagerBooking = async (req, res, next) => {
+  try {
+    const managerid = req.params.managerid;
+    const allturf = await Turf.find({ manager: managerid });
+    const activeTurfs = allturf.filter(turf => turf.isActive === true);
+    const courtids = activeTurfs.flatMap(turf => turf.court.map(court => court._id.toString()));
+    const bookings = await Booking.find({
+      court: {
+        $in: courtids
       }
-  
-      // Check if a booking already exists for the same court, timeslot, and date
+    }).populate('court').populate('user');
+    res.status(200).json({ bookings, activeTurfs });
+  } catch (err) {
+    console.log("error ==", err.message);
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+export const updateBooking = async (req, res, next) => {
+  try {
+      const { courtid, bid } = req.params;
+      const { start, end, date } = req.body;
+
+      const bookdate = new Date(date);
+
+      const booking = await Booking.findById(bid);
+      if (!booking) {
+          return res.status(200).json({ success: false, message: 'Booking not found' });
+      }
+
+      if (booking.status === 'canceled') {
+          return res.status(200).json({ success: false, message: 'The booking is already canceled' });
+      }
+
       const bookingsExist = await Booking.find({
-        court: courtid,
-        'timeslot.start': start,
-        'timeslot.end': end,
-        date: bookdate,
-        _id: { $ne: bid } // Exclude the current booking from the check
+          court: courtid,
+          'timeslot.start': start,
+          'timeslot.end': end,
+          date: bookdate,
+          _id: { $ne: bid }
       });
-      console.log("bookingexist", bookingsExist)
-      if(bookingsExist){
-        if( bookingsExist.status === 'canceled'){
-          const updatedBooking = await Booking.findByIdAndUpdate(
-            bid,
-            {
+
+      if (bookingsExist.length > 0) {
+          const conflictingBooking = bookingsExist.find(b => b.status !== 'canceled');
+          if (conflictingBooking) {
+              return res.status(200).json({ success: false, message: 'A booking already exists for this timeslot' });
+          }
+      }
+
+      const updatedBooking = await Booking.findByIdAndUpdate(
+          bid,
+          {
               "timeslot.start": start,
               "timeslot.end": end,
               date: bookdate
-            },
-            { new: true }
-          );
-          return res.status(200).json({success : true ,updateBooking, message : 'timeslot updated successfully'})
-        }
-
-      }
-  
-      // Update the booking timeslot
-      const updatedBooking = await Booking.findByIdAndUpdate(
-        bid,
-        {
-          "timeslot.start": start,
-          "timeslot.end": end,
-          date: bookdate
-        },
-        { new: true }
+          },
+          { new: true }
       );
+
       if (!updatedBooking) {
-        return res.status(500).json({success : false , message : 'Booking update failed'});
+          return res.status(500).json({ success: false, message: 'Booking update failed' });
       }
-  
-      // Return the updated booking
-      res.status(200).json({success : true ,  message: 'Booking updated successfully', updatedBooking });
-    } catch (err) {
+
+      res.status(200).json({ success: true, message: 'Booking updated successfully', updatedBooking });
+  } catch (err) {
       console.error(err);
       res.status(500).send('An error occurred while updating the booking');
-    }
-  };
+  }
+};
+
   export const deleteBooking = async(req,res,next)=>{
     try{    
             console.log(req.params)
